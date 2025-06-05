@@ -1,0 +1,33 @@
+Terms of Service (ToS) for PywareV2
+Last Updated: June 5, 2025, 13:08
+
+1. Acceptance of Terms
+By using the PywareV2 Discord bot ("the Bot"), you agree to comply with these Terms of Service. If you do not agree, you may not use the Bot.
+
+2. User Responsibility
+You are solely responsible for your use of the Bot and any consequences resulting from it.
+
+The Bot must not be used for illegal, harmful, or malicious activities.
+
+You may not use the Bot to distribute malware, hack systems, or violate any applicable laws.
+
+The Bot should only be used on PCs you own or have explicit permission to control.
+
+3. Disclaimer of Liability
+The Bot is provided "as-is" with no warranties regarding functionality or security.
+
+The developer is not liable for any damages caused by the Bot (e.g., data loss, system failures).
+
+Use the Bot at your own risk.
+
+4. Privacy
+The Bot may process certain data (e.g., commands, system information).
+
+User data will not be sold to third parties but may be stored for Bot functionality.
+
+See our Privacy Policy for further details.
+
+5. Modifications & Termination
+The developer reserves the right to update these ToS at any time.
+
+Access to the Bot may be revoked without warning for violations of these terms.
