@@ -50,6 +50,7 @@ def ask_user_inputs():
         
         if confirmation in ["yes", "y"]:
             print("✔️ Confirmed.\n")
+            clear_screen()
             return token, server_id, channel_id
         else:
             print("🔁 Let's try again...\n")
