@@ -15,7 +15,7 @@ IF %ERRORLEVEL% NEQ 0 (
 )
 python -m ensurepip --default-pip
 python -m pip install --upgrade pip
-pip install discord.py pillow mss opencv-python sounddevice numpy scipy pyautogui pynput screeninfo requests psutil pycaw comtypes pywin32
+pip install discord.py pillow mss opencv-python sounddevice numpy scipy pyautogui pynput screeninfo requests psutil pycaw comtypes pywin32 mss numpy scipy
 cls
 python build.py
 exit
