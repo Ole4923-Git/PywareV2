@@ -25,6 +25,7 @@ def logo():
 ---------------------------------------------------
 |🔧 Remote Control Discord-Bot made by Ole4923.   |
 |⚠️ Important: The Bot need admin rights!         |
+|📬 Discord: discord.gg/BNaDKPrmaP                |
 ---------------------------------------------------
     """)
 
