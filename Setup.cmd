@@ -33,7 +33,7 @@ if exist "%PYTHON_INSTALLER%" (
     echo Python has been installed. Now installing required modules...
     python -m ensurepip --default-pip
     python -m pip install --upgrade pip
-    pip install discord.py pillow mss opencv-python sounddevice numpy scipy pyautogui pynput screeninfo requests psutil pycaw comtypes pywin32 mss numpy scipy
+    pip install discord.py pillow mss opencv-python sounddevice numpy scipy pyautogui pynput screeninfo requests psutil pycaw comtypes pywin32 mss numpy scipy pyinstaller
     cls
     python build.py
 ) else (
