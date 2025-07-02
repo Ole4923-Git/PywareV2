@@ -12,7 +12,7 @@ IF %ERRORLEVEL% EQU 0 (
     python -m pip install --upgrade pip
     pip install discord.py pillow mss opencv-python sounddevice numpy scipy pyautogui pynput screeninfo requests psutil pycaw comtypes pywin32 mss numpy scipy
     cls
-    python build.exe
+    build.exe
     exit
 )
 
